@@ -237,7 +237,7 @@ class RelaxedSVAE(nn.Module):
                 probs=(1.0 / n_cat) * torch.ones(n_cat, device=device)
             ).sample((n_samples, n_batch))
         else:
-            ys = torch.cuda.FloatTensor(n_batch, n_cat)
+            ys = torch.FloatTensor(n_batch, n_cat).to(device)
             ys.zero_()
             ys.scatter_(1, y.view(-1, 1), 1)
             ys = ys.view(1, n_batch, n_cat).expand(n_samples, n_batch, n_cat)
@@ -360,7 +360,7 @@ class RelaxedSVAE(nn.Module):
             ys = (ys_probs == ys_probs.max(-1, keepdim=True).values).float()
             y_int = ys.argmax(-1)
         else:
-            ys = torch.cuda.FloatTensor(n_batch, n_cat)
+            ys = torch.FloatTensor(n_batch, n_cat).to(device)
             ys.zero_()
             ys.scatter_(1, y.view(-1, 1), 1)
             ys = ys.view(1, n_batch, n_cat).expand(n_samples, n_batch, n_cat)
@@ -391,7 +391,8 @@ class RelaxedSVAE(nn.Module):
         log_pz2 = Normal(torch.zeros_like(z2), torch.ones_like(z2)).log_prob(z2).sum(-1)
 
         px_z_loc = self.x_decoder(z1)
-        log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
+        # log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
+        log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1)).sum(-1)
         generative_density = log_pz2 + log_pc + log_pz1_z2 + log_px_z
         variational_density = log_qz1_x + log_qz2_z1
         log_ratio = generative_density - variational_density
@@ -499,7 +500,8 @@ class RelaxedSVAE(nn.Module):
         # qc_z1_all_probas = log_qc_z1.exp().permute(1, 2, 0)
         # Decoder part
         px_z_loc = self.x_decoder(z_all)
-        log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
+        # log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
+        log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1)).sum(-1)
 
         # Log ratio contruction
         log_ratio = log_px_z + log_proba_prior - sum_log_q

@@ -26,7 +26,7 @@ from dmvaes.models.log_likelihood import (
     compute_log_likelihood,
     compute_marginal_log_likelihood,
 )
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class SequentialSubsetSampler(SubsetRandomSampler):
     def __iter__(self):
@@ -116,7 +116,7 @@ class Posterior:
         return map(self.to_cuda, iter(self.data_loader))
 
     def to_cuda(self, tensors):
-        return [t.cuda() if self.use_cuda else t for t in tensors]
+        return [t.to(device) if self.use_cuda else t for t in tensors]
 
     def update(self, data_loader_kwargs):
         posterior = copy.copy(self)

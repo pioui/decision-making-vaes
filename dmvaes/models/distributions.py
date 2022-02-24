@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.distributions as db
 from torch.distributions import constraints
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class EllipticalStudent(db.Distribution):
     support = constraints.real

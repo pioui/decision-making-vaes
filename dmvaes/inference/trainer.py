@@ -11,7 +11,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from tqdm import trange
 
 from dmvaes.inference.posterior import Posterior
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 class Trainer:
     r"""The abstract Trainer class for training a PyTorch model and monitoring its statistics. It should be
@@ -72,7 +72,7 @@ class Trainer:
 
         self.use_cuda = use_cuda and torch.cuda.is_available()
         if self.use_cuda:
-            self.model.cuda()
+            self.model.to(device)
 
         self.frequency = frequency if not benchmark else None
         self.verbose = verbose

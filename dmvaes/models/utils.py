@@ -1,6 +1,6 @@
 import torch
 
-
+device = "cuda" if torch.cuda.is_available() else "cpu"
 def iterate(obj, func):
     t = type(obj)
     if t is list or t is tuple:

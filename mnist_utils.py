@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from tqdm.auto import tqdm
 
 from dmvaes.dataset import MnistDataset
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 N_EVAL_SAMPLES = 25
@@ -35,10 +36,9 @@ DATASET = MnistDataset(
 )
 X_TRAIN, Y_TRAIN = DATASET.train_dataset.tensors
 RDM_INDICES = np.random.choice(len(X_TRAIN), 200)
-X_SAMPLE = X_TRAIN[RDM_INDICES].to("cuda")
-Y_SAMPLE = Y_TRAIN[RDM_INDICES].to("cuda")
+X_SAMPLE = X_TRAIN[RDM_INDICES].to(device)
+Y_SAMPLE = Y_TRAIN[RDM_INDICES].to(device)
 DO_OVERALL = True
-
 
 # Utils functions
 def compute_reject_score(y_true: np.ndarray, y_pred: np.ndarray, num=20):
@@ -146,7 +146,7 @@ def res_eval_loop(
         i = 0
         for tensors in tqdm(trainer.test_loader):
             x, _ = tensors
-            x = x.cuda()
+            x = x.to(device)
             log_ratios_batch = []
             log_qc_batch = []
             for _ in tqdm(range(n_iter)):
@@ -307,8 +307,8 @@ def res_eval_loop(
 
     x_samp, y_samp = DATASET.train_dataset[:128]
     where_ = y_samp != 9
-    x_samp = x_samp[where_].cuda()
-    y_samp = y_samp[where_].cuda()
+    x_samp = x_samp[where_].to(device)
+    y_samp = y_samp[where_].to(device)
     log_ratios = []
     for _ in tqdm(range(n_iter)):
         with torch.no_grad():

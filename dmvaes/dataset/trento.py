@@ -1,0 +1,129 @@
+import torch
+from torch.utils.data import Dataset
+from torch.utils.data import TensorDataset
+
+from scipy import io
+import tifffile
+from sklearn.model_selection import train_test_split
+import numpy as np
+import logging
+
+data_dir = "/home/pigi/Documents/UiT_Internship/Trento/Trento/"
+
+class TrentoDataset(Dataset):
+    def __init__(
+        self,
+        labelled_fraction,
+        labelled_proportions,
+        test_size=0.7,
+        do_1d=True,
+        do_preprocess=True,
+        # **kwargs
+    ) -> None:
+        super().__init__()
+
+        assert len(labelled_proportions) == 6
+        labelled_proportions = np.array(labelled_proportions)
+        assert abs(labelled_proportions.sum() - 1.0) <= 1e-16
+        self.labelled_fraction = labelled_fraction
+        label_proportions = labelled_fraction * labelled_proportions
+
+        image_hyper = torch.tensor(tifffile.imread(data_dir+"hyper_Italy.tif")) # [63,166,600]
+        image_lidar = torch.tensor(tifffile.imread(data_dir+"LiDAR_Italy.tif")) # [2,166,600]
+        x = torch.cat((image_hyper,image_lidar), dim = 0) # [65,166,600]
+
+        # # Standarization 
+        # #TODO: this can be written (more tidy) as a transform with other preprocessin' when making the dataset 
+        # mean = torch.mean(x, dim = 0)
+        # std= torch.std(x, dim = 0)
+        # x = (x - mean)/std # [99600,65]
+
+        y = torch.tensor(io.loadmat(data_dir+"TNsecSUBS_Test.mat")["TNsecSUBS_Test"], dtype = torch.int64) # [166,600] 0 to 6
+
+        valid_indeces = (y!=0)
+        x = x[:,valid_indeces] # [65, 30214]
+        x = x.view(-1,len(x))  # [30214, 65]
+        y = y[valid_indeces]-1 # [30214] 0 to 5
+
+        #reduce the dataset size to make it easier for my pour cpu
+        ind, _ = train_test_split(np.arange(len(x)), train_size=0.03, random_state=42)
+        x = x[ind]
+        y = y[ind]
+
+        non_labelled = labelled_proportions == 0.0
+        assert (
+            non_labelled[1:].astype(int) - non_labelled[:-1].astype(int) >= 0
+        ).all(), (
+            "For convenience please ensure that non labelled numbers are the last ones"
+        )
+        non_labelled = np.where(labelled_proportions == 0.0)[0]
+        if len(non_labelled) >= 1:
+            y[np.isin(y, non_labelled)] = int(non_labelled[0])
+
+
+        # print(torch.unique(y), torch.max(x), torch.min(x), x.shape, y.shape)
+
+        #Normalize to [0,1]
+        if do_preprocess: # TODO: Something more sophisticated?
+            logging.info("Normalize to 0,1")
+            x_min = x.min(dim=0)[0] # [65]
+            x_max = x.max(dim=0)[0] # [65]
+            x = (x- x_min)/(x_max-x_min)
+            assert torch.unique(x.min(dim=0)[0] == 0.)
+            assert torch.unique(x.max(dim=0)[0] == 1.)
+
+        if do_1d:
+            n_examples = len(x)
+            x = x.view(n_examples, -1)
+        
+        # print(torch.unique(y), torch.max(x), torch.min(x), x.shape, y.shape)
+
+        if test_size > 0.0:
+            ind_train, ind_test = train_test_split(
+                np.arange(len(x)), test_size=test_size, random_state=42
+            )
+        else:
+            ind_train = np.arange(len(x))
+            ind_test = []
+        x_train = x[ind_train]
+        y_train = y[ind_train]
+        x_test = x[ind_test]
+        y_test = y[ind_test]
+        n_all = len(x_train)
+
+        # print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
+
+        n_labelled_per_class = (n_all * label_proportions).astype(int)
+        labelled_inds = []
+        for label in y.unique():
+            label_ind = np.where(y_train == label)[0]
+            labelled_exs = np.random.choice(label_ind, size=n_labelled_per_class[label])
+            labelled_inds.append(labelled_exs)
+        labelled_inds = np.concatenate(labelled_inds)
+
+        self.labelled_inds = labelled_inds
+        x_train_labelled = x_train[labelled_inds]
+        y_train_labelled = y_train[labelled_inds]
+
+        assert not (np.isin(np.unique(y_train_labelled), non_labelled)).any()
+        self.train_dataset = TensorDataset(x_train, y_train) # 0 to 5
+        self.train_dataset_labelled = TensorDataset(x_train_labelled, y_train_labelled) # 0 to 4
+        self.test_dataset = TensorDataset(x_test, y_test) # 0 to 5
+
+# LABELLED_PROPORTIONS = np.array([1/6, 1/6, 1/6, 1/6, 1/6, 0.0])
+# LABELLED_PROPORTIONS = LABELLED_PROPORTIONS / LABELLED_PROPORTIONS.sum()
+
+# LABELLED_FRACTION = 0.5
+
+# DATASET = TrentoDataset(
+#     labelled_proportions=LABELLED_PROPORTIONS,
+#     labelled_fraction=LABELLED_FRACTION
+# )
+# x,y = DATASET.train_dataset.tensors # 12085
+# print(x.shape, y.shape, torch.unique(y))
+
+# x,y = DATASET.train_dataset_labelled.tensors # 6489 subset train  
+# print(x.shape, y.shape, torch.unique(y))
+
+# x,y = DATASET.test_dataset.tensors # 15107
+# print(x.shape, y.shape, torch.unique(y))

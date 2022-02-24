@@ -5,6 +5,7 @@ from .gaussian_dataset import (
     SyntheticMixtureGaussianDataset,
 )
 from .mnist import MnistDataset
+from .trento import TrentoDataset
 
 __all__ = [
     "SyntheticGaussianDataset",
@@ -12,5 +13,6 @@ __all__ = [
     "GaussianDataset",
     "GeneExpressionDataset",
     "MnistDataset",
+    "TrentoDataset"
     "SignedGamma",
 ]

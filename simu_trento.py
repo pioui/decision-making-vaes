@@ -61,7 +61,7 @@ from trento_utils import (
 device = "cuda" if torch.cuda.is_available() else "cpu"
 N_PARTICULES = 30
 N_LATENT = 10
-N_EPOCHS = 1
+N_EPOCHS = 50
 N_HIDDEN = 128
 LR = 1e-3
 N_EXPERIMENTS = 1
@@ -89,6 +89,7 @@ logging.basicConfig(filename = '/home/pigi/repos/decision-making-vaes/logs/{}.lo
 
 print("train all examples {}".format(len(DATASET.train_dataset.tensors[0])))
 print("train labelled examples {}".format(len(DATASET.train_dataset_labelled.tensors[0])))
+print("test labelled examples {}".format(len(DATASET.test_dataset.tensors[0])))
 
 EVAL_ENCODERS = [
     dict(encoder_type="train", eval_encoder_name="train"),  # MUST BE ON TOP!!!

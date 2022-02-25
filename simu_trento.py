@@ -96,121 +96,121 @@ EVAL_ENCODERS = [
 ]
 
 SCENARIOS = [  # WAKE updates
-    # dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB0_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB0( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=128,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    # ),
+    dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB0_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB0( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=128,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+    ),
 
-    # dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB1_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB1( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=512,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    # ),
+    dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB1_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB1( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=512,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+    ),
 
-    # dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB2_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB2( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=512,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    #     batch_size=128,
-    # ),
-    #     dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB3_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB3( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=128,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    # ),
-    #     dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB4_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB4( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=128,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    # ),
-    #     dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB5_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB5( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=128,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    # ),
-    #     dict(
-    #     loss_gen="ELBO",
-    #     loss_wvar="ELBO",
-    #     reparam_latent=True,
-    #     counts=None,
-    #     model_name="EncoderB6_VAE",
-    #     encoder_z1=nn.ModuleDict(
-    #         {"default": EncoderB6( 
-    #             n_input=N_INPUT,
-    #             n_output=N_LATENT,
-    #             n_hidden=512,
-    #             dropout_rate=0.1,
-    #             do_batch_norm=False,
-    #         )}
-    #     ),
-    # ),
+    dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB2_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB2( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=512,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+        batch_size=128,
+    ),
+        dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB3_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB3( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=128,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+    ),
+        dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB4_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB4( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=128,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+    ),
+        dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB5_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB5( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=128,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+    ),
+        dict(
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB6_VAE",
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB6( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=512,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+    ),
 ]
 
 DF_LI = []

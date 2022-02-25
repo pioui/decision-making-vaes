@@ -53,13 +53,12 @@ from trento_utils import (
     res_eval_loop,
 )
 device = "cuda" if torch.cuda.is_available() else "cpu"
-logging.basicConfig(level=logging.DEBUG)
 N_PARTICULES = 30
 N_LATENT = 10
 N_EPOCHS = 100
 N_HIDDEN = 128
 LR = 1e-3
-N_EXPERIMENTS = 5
+N_EXPERIMENTS = 1
 DEFAULT_MAP = dict(
     REVKL="gaussian",
     CUBO="student",
@@ -79,9 +78,11 @@ DEBUG = False
 if not os.path.exists(MDL_DIR):
     os.makedirs(MDL_DIR)
 
+logging.basicConfig(filename = '/home/pigi/repos/decision-making-vaes/logs/{}.log'.format(PROJECT_NAME),level=logging.DEBUG)
 
-print("train all examples", len(DATASET.train_dataset.tensors[0]))
-print("train labelled examples", len(DATASET.train_dataset_labelled.tensors[0]))
+
+logging.info("train all examples".format(len(DATASET.train_dataset.tensors[0])))
+logging.info("train labelled examples".format(len(DATASET.train_dataset_labelled.tensors[0])))
 
 EVAL_ENCODERS = [
     dict(encoder_type="train", eval_encoder_name="train"),  # MUST BE ON TOP!!!
@@ -95,7 +96,15 @@ SCENARIOS = [  # WAKE updates
         reparam_latent=True,
         counts=None,
         model_name="EncoderB0_VAE",
-        encoder_z1=EncoderB0()
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB0( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=N_HIDDEN,
+                dropout_rate=0.1,
+                do_batch_norm=False,
+            )}
+        )
     ),
 
     dict(
@@ -104,8 +113,16 @@ SCENARIOS = [  # WAKE updates
         reparam_latent=True,
         counts=None,
         model_name="EncoderB1_VAE",
-        encoder_z1=EncoderB1()
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB1( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=N_HIDDEN,
+                dropout_rate=0.1,
+                do_batch_norm=False,
+            )}
     ),
+    )
 ]
 
 DF_LI = []
@@ -131,6 +148,8 @@ for scenario in SCENARIOS:
     batch_norm = scenario.get("batch_norm", False)
     cubo_z2_with_elbo = scenario.get("cubo_z2_with_elbo", False)
     batch_size = scenario.get("batch_size", BATCH_SIZE)
+
+    encoder_z1=scenario.get("encoder_z1", None)
 
     do_defensive = type(loss_wvar) == list
     multi_encoder_keys = loss_wvar if do_defensive else ["default"]
@@ -175,6 +194,7 @@ for scenario in SCENARIOS:
                     do_batch_norm=batch_norm,
                     multi_encoder_keys=multi_encoder_keys,
                     vdist_map=vdist_map_train,
+                    encoder_z1=encoder_z1
                 )
                 if os.path.exists(mdl_name):
                     print("model exists; loading from .pt")
@@ -278,19 +298,8 @@ for scenario in SCENARIOS:
                                 for key in multi_encoder_keys_eval
                             }
                         ).to(device)
-                        new_encoder_z1 = nn.ModuleDict(
-                            {
-                                # key: EncoderB(
-                                key: Z1_MAP[vdist_map_eval[key]](
-                                    n_input=N_INPUT,
-                                    n_output=n_latent,
-                                    n_hidden=n_hidden,
-                                    dropout_rate=0.1,
-                                    do_batch_norm=False,
-                                )
-                                for key in multi_encoder_keys_eval
-                            }
-                        ).to(device)
+                        new_encoder_z1 = encoder_z1.to(device)
+
                         new_encoder_z2_z1 = nn.ModuleDict(
                             {
                                 # key: EncoderA(

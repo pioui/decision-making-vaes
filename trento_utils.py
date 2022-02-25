@@ -223,11 +223,11 @@ def res_eval_loop(
         # iwelbo_c_vals = torch.cat(iwelbo_c_vals)
 
     # Entropy
-    where9 = train_res["y"] == 9
+    where9 = train_res["y"] == 5
     probas9 = train_res["qc_z1_all_probas"].mean(0)[where9]
     entropy = (-probas9 * probas9.log()).sum(-1).mean(0)
 
-    where_non9 = train_res["y"] != 9
+    where_non9 = train_res["y"] != 5
     y_non9 = train_res["y"][where_non9]
     y_pred_non9 = y_pred[where_non9].argmax(1)
     m_accuracy = accuracy_score(y_non9, y_pred_non9)
@@ -304,7 +304,7 @@ def res_eval_loop(
     _, khats = psislw(log_ratios.T.clone())
 
     x_samp, y_samp = DATASET.train_dataset[:128]
-    where_ = y_samp != 9
+    where_ = y_samp != 5
     x_samp = x_samp[where_].to(device)
     y_samp = y_samp[where_].to(device)
     log_ratios = []

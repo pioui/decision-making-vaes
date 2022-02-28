@@ -140,6 +140,7 @@ class TrentoRTrainer:
                 x_s = x_s.to(device)
                 y_s = y_s.to(device)
 
+
                 if overall_loss is not None:
                     loss = self.loss(
                         x_u=x_u,

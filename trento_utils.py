@@ -23,14 +23,15 @@ N_LABELS = 5
 
 CLASSIFICATION_RATIO = 50.0
 N_EVAL_SAMPLES = 25
-N_EPOCHS = 50
+N_EPOCHS = 1
 LR = 3e-4
 BATCH_SIZE = 512
 DATASET = TrentoDataset(
     labelled_fraction=LABELLED_FRACTION,
     labelled_proportions=LABELLED_PROPORTIONS,
-    do_1d=True,
+    do_1d=False,
     test_size=0.5,
+    patch_size=11
 )
 X_TRAIN, Y_TRAIN = DATASET.train_dataset.tensors
 RDM_INDICES = np.random.choice(len(X_TRAIN), 200)

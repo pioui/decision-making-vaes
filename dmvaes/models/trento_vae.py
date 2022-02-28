@@ -20,7 +20,9 @@ from dmvaes.models.regular_modules import (
     EncoderB,
     EncoderBStudent,
 )
-
+from dmvaes.models.trento_encoders import (
+    BernoulliDecoderA7,
+)
 logger = logging.getLogger(__name__)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -115,8 +117,8 @@ class TrentoVAE(nn.Module):
             n_input=n_latent + n_labels, n_output=n_latent, n_hidden=n_hidden
         )
 
-        self.x_decoder = BernoulliDecoderA(
-            n_input=n_latent, n_output=n_input, do_batch_norm=do_batch_norm
+        self.x_decoder = BernoulliDecoderA7(
+            n_input=n_latent, n_output=n_input, n_hidden=n_hidden, do_batch_norm=do_batch_norm
         )
 
         y_prior_probs = (
@@ -392,7 +394,7 @@ class TrentoVAE(nn.Module):
 
         px_z_loc = self.x_decoder(z1)
         # log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
-        log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1)).sum(-1)
+        log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1,-1)).sum(-1)
         generative_density = log_pz2 + log_pc + log_pz1_z2 + log_px_z
         variational_density = log_qz1_x + log_qz2_z1
         log_ratio = generative_density - variational_density
@@ -501,7 +503,7 @@ class TrentoVAE(nn.Module):
         # Decoder part
         px_z_loc = self.x_decoder(z_all)
         # log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
-        log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1)).sum(-1)
+        log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1,-1)).sum(-1)
 
         # Log ratio contruction
         log_ratio = log_px_z + log_proba_prior - sum_log_q

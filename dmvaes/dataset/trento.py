@@ -16,12 +16,14 @@ class TrentoDataset(Dataset):
         labelled_fraction,
         labelled_proportions,
         test_size=0.7,
-        do_1d=True,
+        do_1d=False,
         do_preprocess=True,
+        patch_size = 15 #odd number
         # **kwargs
     ) -> None:
         super().__init__()
-
+        
+        assert patch_size % 2 == 1
         assert len(labelled_proportions) == 6
         labelled_proportions = np.array(labelled_proportions)
         assert abs(labelled_proportions.sum() - 1.0) <= 1e-16
@@ -31,7 +33,7 @@ class TrentoDataset(Dataset):
         image_hyper = torch.tensor(tifffile.imread(data_dir+"hyper_Italy.tif")) # [63,166,600]
         image_lidar = torch.tensor(tifffile.imread(data_dir+"LiDAR_Italy.tif")) # [2,166,600]
         x = torch.cat((image_hyper,image_lidar), dim = 0) # [65,166,600]
-
+        # x = x[:,:20,:30]
         # # Standarization 
         # #TODO: this can be written (more tidy) as a transform with other preprocessin' when making the dataset 
         # mean = torch.mean(x, dim = 0)
@@ -39,16 +41,27 @@ class TrentoDataset(Dataset):
         # x = (x - mean)/std # [99600,65]
 
         y = torch.tensor(io.loadmat(data_dir+"TNsecSUBS_Test.mat")["TNsecSUBS_Test"], dtype = torch.int64) # [166,600] 0 to 6
+        # y = y[:20,:30]
+
+        # Patching
+        x_padded = torch.nn.ReflectionPad2d(int(patch_size/2))(x) # [65,166+p/2, 600+p/2]
+        x_patched = x_padded.unfold(dimension=1, size=patch_size, step=1)
+        x_patched = x_patched.unfold(dimension=2, size=patch_size, step=1) # [65,166,600,p,p]
+
+        assert torch.equal(x_patched[:,int(patch_size/2),int(patch_size/2),:,:], x[:,:patch_size, :patch_size]) 
 
         valid_indeces = (y!=0)
-        x = x[:,valid_indeces] # [65, 30214]
-        x = x.view(-1,len(x))  # [30214, 65]
+        x = x_patched[:,valid_indeces,:,:] # [65,g,h,p,p]
+        x = x.view(-1,len(x), patch_size, patch_size)  # [30214,65,p,p]
         y = y[valid_indeces]-1 # [30214] 0 to 5
 
+        print("1",x.shape, y.shape)
+
         #reduce the dataset size to make it easier for my pour cpu
-        ind, _ = train_test_split(np.arange(len(x)), train_size=0.17, random_state=42)
+        ind, _ = train_test_split(np.arange(len(x)), train_size=0.05, random_state=42)
         x = x[ind]
         y = y[ind]
+        print("2",x.shape, y.shape)
 
         non_labelled = labelled_proportions == 0.0
         assert (
@@ -75,7 +88,8 @@ class TrentoDataset(Dataset):
         if do_1d:
             n_examples = len(x)
             x = x.view(n_examples, -1)
-        
+        print("3",x.shape, y.shape)
+
         # print(torch.unique(y), torch.max(x), torch.min(x), x.shape, y.shape)
 
         if test_size > 0.0:
@@ -90,6 +104,7 @@ class TrentoDataset(Dataset):
         x_test = x[ind_test]
         y_test = y[ind_test]
         n_all = len(x_train)
+        print("4",x_train.shape, y_train.shape)
 
         # print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
 
@@ -110,15 +125,25 @@ class TrentoDataset(Dataset):
         self.train_dataset_labelled = TensorDataset(x_train_labelled, y_train_labelled) # 0 to 4
         self.test_dataset = TensorDataset(x_test, y_test) # 0 to 5
 
-# LABELLED_PROPORTIONS = np.array([1/6, 1/6, 1/6, 1/6, 1/6, 0.0])
-# LABELLED_PROPORTIONS = LABELLED_PROPORTIONS / LABELLED_PROPORTIONS.sum()
+        x,y = self.train_dataset.tensors # 12085
+        print(x.shape, y.shape, torch.unique(y))
 
-# LABELLED_FRACTION = 0.5
+        x,y = self.train_dataset_labelled.tensors # 6489 subset train  
+        print(x.shape, y.shape, torch.unique(y))
 
-# DATASET = TrentoDataset(
-#     labelled_proportions=LABELLED_PROPORTIONS,
-#     labelled_fraction=LABELLED_FRACTION
-# )
+        x,y = self.test_dataset.tensors # 15107
+        print(x.shape, y.shape, torch.unique(y))
+
+LABELLED_PROPORTIONS = np.array([1/6, 1/6, 1/6, 1/6, 1/6, 0.0])
+LABELLED_PROPORTIONS = LABELLED_PROPORTIONS / LABELLED_PROPORTIONS.sum()
+
+LABELLED_FRACTION = 0.5
+
+DATASET = TrentoDataset(
+    labelled_proportions=LABELLED_PROPORTIONS,
+    labelled_fraction=LABELLED_FRACTION,
+    patch_size=11
+)
 # x,y = DATASET.train_dataset.tensors # 12085
 # print(x.shape, y.shape, torch.unique(y))
 

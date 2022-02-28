@@ -69,7 +69,7 @@ class EncoderA(nn.Module):
         self.var_encoder = nn.Linear(n_hidden, n_output)
         self.tanh = nn.Tanh()
 
-    def forward(self, x, n_samples, squeeze=True, reparam=True):
+    def forward(self, x, n_samples=1, squeeze=True, reparam=True):
         q = self.encoder(x)
         q_m = self.mean_encoder(q)
         q_v = self.var_encoder(q)
@@ -134,7 +134,7 @@ class EncoderB(nn.Module):
         self.var_encoder = nn.Linear(n_hidden, n_output)
         self.tanh = nn.Tanh()
 
-    def forward(self, x, n_samples, squeeze=True, reparam=True):
+    def forward(self, x, n_samples=1, squeeze=True, reparam=True):
         n_batch = len(x)
         x_reshape = x.view(n_batch, 1, 28, 28)
 
@@ -174,7 +174,7 @@ class EncoderBStudent(EncoderB):
         )
         self.df_fn = nn.Linear(n_hidden, 1)
 
-    def forward(self, x, n_samples, squeeze=True, reparam=True):
+    def forward(self, x, n_samples=1, squeeze=True, reparam=True):
         n_batch = len(x)
         x_reshape = x.view(n_batch, 1, 28, 28)
 
@@ -266,7 +266,7 @@ class EncoderAStudent(nn.Module):
             latent = dist.sample(sample_shape=sample_shape)
         return latent
 
-    def forward(self, x, n_samples, squeeze=True, reparam=True):
+    def forward(self, x, n_samples=1, squeeze=True, reparam=True):
         q = self.encoder(x)
         q_m = self.mean_encoder(q)
         q_v = self.var_encoder(q)
@@ -310,7 +310,7 @@ class LinearEncoder(nn.Module):
         l_mat = self.l_mat_encoder
         return l_mat.matmul(l_mat.T)
 
-    def forward(self, x, n_samples, reparam=True, squeeze=True):
+    def forward(self, x, n_samples=1, reparam=True, squeeze=True):
         q_m = self.mean_encoder(x)
         l_mat = self.var_encoder
         q_v = l_mat.matmul(l_mat.T)
@@ -590,3 +590,27 @@ class EncoderIAF(nn.Module):
         if torch.isnan(qz_x).any() or torch.isinf(qz_x).any():
             print("ouille")
         return dict(latent=z, posterior_density=qz_x, last_inp=inp)
+
+
+if __name__ == "__main__":
+    from torchsummary import summary
+
+    print('ClassifierA')
+    layer = ClassifierA(n_input=10, n_output=5, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,10))
+
+    print('EncoderB')
+    layer = EncoderB(n_input=784, n_output=10, n_hidden=128, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,784))
+
+    print('EncoderA')
+    layer = EncoderA(n_input=15, n_output=10, n_hidden=128, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,15))
+
+    print('DecoderA')
+    layer = DecoderA(n_input=15, n_output=10, n_hidden=128)
+    summary(layer, (1,15))
+
+    print('BernoulliDecoderA')
+    layer = BernoulliDecoderA(n_input=10, n_output=784, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,10))

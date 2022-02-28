@@ -447,3 +447,29 @@ class EncoderB6(nn.Module):
         return dict(
             q_m=q_m, q_v=q_v, latent=latent, dist=variational_dist, sum_last=True
         )
+
+
+if __name__ == "__main__":
+    from torchsummary import summary
+
+    layer = EncoderB0(n_input=65, n_output=10, n_hidden=128, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))
+
+    layer = EncoderB1(n_input=65, n_output=10, n_hidden=512, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))
+
+    layer = EncoderB2(n_input=65, n_output=10, n_hidden=512, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))
+
+    layer = EncoderB3(n_input=65, n_output=10, n_hidden=128, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))
+
+
+    layer = EncoderB4(n_input=65, n_output=10, n_hidden=128, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))
+
+    layer = EncoderB5(n_input=65, n_output=10, n_hidden=128, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))
+
+    layer = EncoderB6(n_input=65, n_output=10, n_hidden=512, dropout_rate=0.1, do_batch_norm=False)
+    summary(layer, (1,65))

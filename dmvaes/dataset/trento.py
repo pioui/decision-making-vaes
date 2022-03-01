@@ -58,7 +58,7 @@ class TrentoDataset(Dataset):
 
 
         #reduce the dataset size to make it easier for my pour cpu
-        ind, _ = train_test_split(np.arange(len(x)), train_size=0.1, random_state=42)
+        ind, _ = train_test_split(np.arange(len(x)), train_size=0.17, random_state=42)
         x = x[ind]
         y = y[ind]
 

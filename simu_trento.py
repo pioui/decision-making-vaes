@@ -31,7 +31,9 @@ from dmvaes.models.regular_modules import (
 )
 from dmvaes.models.trento_encoders import (
     EncoderB8,
-    BernoulliDecoderA8
+    BernoulliDecoderA8,
+    EncoderB9,
+    BernoulliDecoderA9
 )
 
 from trento_utils import (
@@ -92,6 +94,13 @@ EVAL_ENCODERS = [
 
 SCENARIOS = [  # WAKE updates
     dict(
+        dataset = TrentoDataset(
+                labelled_fraction=LABELLED_FRACTION,
+                labelled_proportions=LABELLED_PROPORTIONS,
+                do_1d=False,
+                test_size=0.5,
+                patch_size=13
+            ),
         loss_gen="ELBO",
         loss_wvar="ELBO",
         reparam_latent=True,
@@ -116,6 +125,39 @@ SCENARIOS = [  # WAKE updates
             ),
         batch_size=64
     ),
+    dict(
+        dataset = TrentoDataset(
+                labelled_fraction=LABELLED_FRACTION,
+                labelled_proportions=LABELLED_PROPORTIONS,
+                do_1d=False,
+                test_size=0.5,
+                patch_size=23
+            ),
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB9_VAE",
+        n_samples_train=25,
+        n_latent=20,
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB9( 
+                n_input=N_INPUT,
+                n_output=20,
+                n_hidden=512,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+        x_decoder=BernoulliDecoderA9( 
+                n_input=20*25,
+                n_output=N_INPUT,
+                n_hidden=512,
+                dropout_rate=0,
+                do_batch_norm=False,
+            ),
+        batch_size=64
+    ),
     
 ]
 
@@ -123,6 +165,7 @@ DF_LI = []
 print("Number of experiments : {}".format(N_EXPERIMENTS))
 # Main script
 for scenario in SCENARIOS:
+    DATASET = scenario.get("dataset", DATASET)
     loss_gen = scenario.get("loss_gen", None)
     loss_wvar = scenario.get("loss_wvar", None)
     n_samples_train = scenario.get("n_samples_train", None)

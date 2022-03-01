@@ -131,6 +131,8 @@ class TrentoRTrainer:
 
         pbar = tqdm(range(n_epochs))
         for epoch in pbar:
+            loss_list = []
+
             for (tensor_all, tensor_superv) in zip(
                 self.train_loader, cycle(self.train_annotated_loader)
             ):
@@ -198,6 +200,8 @@ class TrentoRTrainer:
                     optim_var_wake.zero_grad()
                     psi_loss.backward()
                     optim_var_wake.step()
+                    loss_list.append(psi_loss.detach().numpy())
+
                     # torch.cuda.synchronize()
                     if self.iterate % 100 == 0:
                         self.metrics["train_phi_wake"].append(psi_loss.item())
@@ -210,6 +214,7 @@ class TrentoRTrainer:
 
                 self.iterate += 1
             pbar.set_description("{0:.2f}".format(theta_loss.item()))
+            print("epoch {} train loss: {}".format(epoch, np.mean(loss_list)))
 
     def train_eval_encoder(
         self,
@@ -269,6 +274,7 @@ class TrentoRTrainer:
         logger.info("Training using {}".format(wake_psi))
 
         for epoch in tqdm(range(n_epochs)):
+            loss_list=[]
             for (tensor_all, tensor_superv) in zip(
                 self.train_loader, cycle(self.train_annotated_loader)
             ):
@@ -302,8 +308,11 @@ class TrentoRTrainer:
                     optim_vars[key].zero_grad()
                     psi_loss.backward()
                     optim_vars[key].step()
+                    loss_list.append(psi_loss.detach().numpy())
                     # torch.cuda.synchronize()
                     self.iterate += 1
+            print("epoch {} evaluation loss: {}".format(epoch, np.mean(loss_list)))
+
 
     def train_defensive(
         self,

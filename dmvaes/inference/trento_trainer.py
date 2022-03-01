@@ -94,7 +94,7 @@ class TrentoRTrainer:
         if n_samples is not None:
             n_samples_theta = n_samples
             n_samples_phi = n_samples
-        print(
+        logger.info(
             "Using {n_samples_theta} and {n_samples_phi} samples for theta wake / phi wake".format(
                 n_samples_theta=n_samples_theta, n_samples_phi=n_samples_phi
             )
@@ -107,7 +107,7 @@ class TrentoRTrainer:
 
             params = filter(lambda p: p.requires_grad, self.model.parameters())
             optim = Adam(params, lr=lr)
-            print("Monobjective using {} loss".format(overall_loss))
+            logger.info("Monobjective using {} loss".format(overall_loss))
         else:
 
             params_gen = filter(
@@ -125,7 +125,7 @@ class TrentoRTrainer:
             )
 
             optim_var_wake = Adam(params_var, lr=lr)
-            print(
+            logger.info(
                 "Multiobjective training using {} / {}".format(wake_theta, wake_psi)
             )
 
@@ -214,7 +214,7 @@ class TrentoRTrainer:
 
                 self.iterate += 1
             pbar.set_description("{0:.2f}".format(theta_loss.item()))
-            print("epoch {} train loss: {}".format(epoch, np.mean(loss_list)))
+            logger.info("epoch {} train loss: {}".format(epoch, np.mean(loss_list)))
 
     def train_eval_encoder(
         self,
@@ -311,7 +311,7 @@ class TrentoRTrainer:
                     loss_list.append(psi_loss.detach().numpy())
                     # torch.cuda.synchronize()
                     self.iterate += 1
-            print("epoch {} evaluation loss: {}".format(epoch, np.mean(loss_list)))
+            logger.info("epoch {} evaluation loss: {}".format(epoch, np.mean(loss_list)))
 
 
     def train_defensive(

@@ -448,17 +448,17 @@ class EncoderB6(nn.Module):
             q_m=q_m, q_v=q_v, latent=latent, dist=variational_dist, sum_last=True
         )
 
-class EncoderB7(nn.Module):
+class EncoderB8(nn.Module):
     def __init__(
         self, n_input, n_output, n_hidden, dropout_rate, do_batch_norm, n_middle=None
     ):
         """  
-        65 -FC-> 28x28 -2x2D Conv 128-256->
+        65,p,p -FC-> 28x28 -2x2D Conv 128-256->
         """
         # TODO: describe architecture and choice for people 
         super().__init__()        
         self.encoder_cv = nn.Sequential(
-            nn.Conv2d(in_channels=65, out_channels=128, kernel_size=3),
+            nn.Conv2d(in_channels=n_input, out_channels=128, kernel_size=3),
             nn.SELU(),
             nn.MaxPool2d(2),
             nn.Dropout(p=dropout_rate),
@@ -474,7 +474,6 @@ class EncoderB7(nn.Module):
 
     def forward(self, x, n_samples=1, squeeze=True, reparam=True):
         n_batch = len(x)
-        print(x.shape)
 
         q = self.encoder_cv(x)
         q = q.view(n_batch, -1)
@@ -497,43 +496,8 @@ class EncoderB7(nn.Module):
             q_m=q_m, q_v=q_v, latent=latent, dist=variational_dist, sum_last=True
         )
 
-class FCLayersA(nn.Module):
-    def __init__(
-        self, n_input, n_output, n_middle=None, dropout_rate=0.1, do_batch_norm=False
-    ):
-        super().__init__()
-        n_middle = n_output if n_middle is None else n_middle
-        self.to_hidden = nn.Linear(in_features=n_input, out_features=n_middle)
-        self.do_batch_norm = do_batch_norm
-        if do_batch_norm:
-            self.batch_norm = nn.BatchNorm1d(num_features=n_middle)
-
-        self.to_out = nn.Linear(in_features=n_middle, out_features=n_output)
-        self.dropout = nn.Dropout(p=dropout_rate)
-        self.activation = nn.SELU()
-        # self.activation = nn.ReLU()
-
-    def forward(self, x):
-        res = self.to_hidden(x)
-        if self.do_batch_norm:
-            if res.ndim == 4:
-                n1, n2, n3, n4 = res.shape
-                res = self.batch_norm(res.view(n1 * n2 * n3, n4))
-                res = res.view(n1, n2, n3, n4)
-            elif res.ndim == 3:
-                n1, n2, n3 = res.shape
-                res = self.batch_norm(res.view(n1 * n2, n3))
-                res = res.view(n1, n2, n3)
-            elif res.ndim == 2:
-                res = self.batch_norm(res)
-            else:
-                raise ValueError("{} ndim not handled.".format(res.ndim))
-        res = self.activation(res)
-        res = self.dropout(res)
-        res = self.to_out(res)
-        return res
     
-class BernoulliDecoderA7(nn.Module):
+class BernoulliDecoderA8(nn.Module):
     def __init__(
         self,
         n_input: int,
@@ -541,30 +505,60 @@ class BernoulliDecoderA7(nn.Module):
         n_hidden: int,
         dropout_rate: float = 0.0,
         do_batch_norm: bool = True,
-        patch_size: int = 11
     ):
         super().__init__()
-        self.loc = FCLayersA(
-            n_input, n_hidden, dropout_rate=dropout_rate, do_batch_norm=do_batch_norm
-        )
+        self.decoder_fc = nn.Linear(n_input, n_hidden)
         self.decoder_cv = nn.Sequential(
-            nn.Conv2d(in_channels=n_hidden, out_channels=128, kernel_size=1),
+            nn.Upsample(scale_factor=5),
+            nn.Conv2d(in_channels=n_hidden, out_channels=128, kernel_size=3),
             nn.SELU(),
-            nn.Upsample((1,2,1,1)),
             nn.Dropout(p=dropout_rate),
+
+            nn.Upsample(scale_factor=5),
             nn.Conv2d(in_channels=128, out_channels=n_output, kernel_size=3),
             nn.SELU(),
-            nn.Upsample((1,2,1,1)),
             nn.Dropout(p=dropout_rate),
         )
         self.n_hidden = n_hidden
 
     def forward(self, x):
-        n_batch = len(x)
-
-        x_1d = self.loc(x)
-        x_3d = x_1d.view(n_batch, self.n_hidden, 1, 1)
+        n_samples, n_batch, n_latent = x.shape
+        x_1d = x.view(n_batch, n_samples*n_latent)
+        x_1d = self.decoder_fc(x_1d)
+        x_3d = x_1d.reshape(n_batch, self.n_hidden, 1, 1)
         means = self.decoder_cv(x_3d)
 
         means = nn.Sigmoid()(means)
         return means
+
+
+if __name__ == "__main__":
+    from torchsummary import summary
+
+    n_input = 65
+    n_latent = 10
+    n_samples = 25
+
+    layer = EncoderB8(
+        n_input=65, 
+        n_output=n_latent, 
+        n_hidden=256, 
+        dropout_rate=0.1, 
+        do_batch_norm=False)
+
+    x = torch.rand(20, 65, 13, 13)
+    x_out= layer(x, n_samples)
+    z1 = x_out['latent']
+    print(x.shape, z1.shape)
+    summary(layer, (65,13,13))
+
+    layer = BernoulliDecoderA8(
+        n_input=n_latent*n_samples, 
+        n_output=n_input, 
+        n_hidden=256, 
+        dropout_rate=0.1, 
+        do_batch_norm=False)
+
+    x_out= layer(z1)
+    print(z1.shape, x_out.shape)
+    # summary(layer, (1,250))

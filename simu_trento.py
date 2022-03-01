@@ -30,7 +30,8 @@ from dmvaes.models.regular_modules import (
     EncoderBStudent,
 )
 from dmvaes.models.trento_encoders import (
-    EncoderB7,
+    EncoderB8,
+    BernoulliDecoderA8
 )
 
 from trento_utils import (
@@ -95,9 +96,10 @@ SCENARIOS = [  # WAKE updates
         loss_wvar="ELBO",
         reparam_latent=True,
         counts=None,
-        model_name="EncoderB7_VAE",
+        model_name="EncoderB8_VAE",
+        n_samples_train=25,
         encoder_z1=nn.ModuleDict(
-            {"default": EncoderB7( 
+            {"default": EncoderB8( 
                 n_input=N_INPUT,
                 n_output=N_LATENT,
                 n_hidden=256,
@@ -105,7 +107,14 @@ SCENARIOS = [  # WAKE updates
                 do_batch_norm=False,
             )}
         ),
-        batch_size=1
+        x_decoder=BernoulliDecoderA8( 
+                n_input=N_LATENT*25,
+                n_output=N_INPUT,
+                n_hidden=256,
+                dropout_rate=0,
+                do_batch_norm=False,
+            ),
+        batch_size=2
     ),
     
 ]
@@ -135,6 +144,7 @@ for scenario in SCENARIOS:
     batch_size = scenario.get("batch_size", BATCH_SIZE)
 
     encoder_z1=scenario.get("encoder_z1", None)
+    x_decoder=scenario.get("x_decoder", None)
 
     do_defensive = type(loss_wvar) == list
     multi_encoder_keys = loss_wvar if do_defensive else ["default"]
@@ -179,12 +189,14 @@ for scenario in SCENARIOS:
                     do_batch_norm=batch_norm,
                     multi_encoder_keys=multi_encoder_keys,
                     vdist_map=vdist_map_train,
-                    encoder_z1=encoder_z1
+                    encoder_z1=encoder_z1,
+                    x_decoder=x_decoder
                 )
                 if os.path.exists(mdl_name):
                     print("model exists; loading from .pt")
                     mdl.load_state_dict(torch.load(mdl_name))
                 mdl.to(device)
+
                 trainer = TrentoRTrainer(
                     dataset=DATASET,
                     model=mdl,

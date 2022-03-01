@@ -55,13 +55,13 @@ class TrentoDataset(Dataset):
         x = x.view(-1,len(x), patch_size, patch_size)  # [30214,65,p,p]
         y = y[valid_indeces]-1 # [30214] 0 to 5
 
-        print("1",x.shape, y.shape)
+
 
         #reduce the dataset size to make it easier for my pour cpu
         ind, _ = train_test_split(np.arange(len(x)), train_size=0.05, random_state=42)
         x = x[ind]
         y = y[ind]
-        print("2",x.shape, y.shape)
+
 
         non_labelled = labelled_proportions == 0.0
         assert (
@@ -74,7 +74,6 @@ class TrentoDataset(Dataset):
             y[np.isin(y, non_labelled)] = int(non_labelled[0])
 
 
-        # print(torch.unique(y), torch.max(x), torch.min(x), x.shape, y.shape)
 
         #Normalize to [0,1]
         if do_preprocess: # TODO: Something more sophisticated?
@@ -88,9 +87,7 @@ class TrentoDataset(Dataset):
         if do_1d:
             n_examples = len(x)
             x = x.view(n_examples, -1)
-        print("3",x.shape, y.shape)
 
-        # print(torch.unique(y), torch.max(x), torch.min(x), x.shape, y.shape)
 
         if test_size > 0.0:
             ind_train, ind_test = train_test_split(
@@ -104,9 +101,7 @@ class TrentoDataset(Dataset):
         x_test = x[ind_test]
         y_test = y[ind_test]
         n_all = len(x_train)
-        print("4",x_train.shape, y_train.shape)
 
-        # print(x_train.shape, y_train.shape, x_test.shape, y_test.shape)
 
         n_labelled_per_class = (n_all * label_proportions).astype(int)
         labelled_inds = []
@@ -126,24 +121,21 @@ class TrentoDataset(Dataset):
         self.test_dataset = TensorDataset(x_test, y_test) # 0 to 5
 
         x,y = self.train_dataset.tensors # 12085
-        print(x.shape, y.shape, torch.unique(y))
 
         x,y = self.train_dataset_labelled.tensors # 6489 subset train  
-        print(x.shape, y.shape, torch.unique(y))
 
         x,y = self.test_dataset.tensors # 15107
-        print(x.shape, y.shape, torch.unique(y))
 
-LABELLED_PROPORTIONS = np.array([1/6, 1/6, 1/6, 1/6, 1/6, 0.0])
-LABELLED_PROPORTIONS = LABELLED_PROPORTIONS / LABELLED_PROPORTIONS.sum()
+# LABELLED_PROPORTIONS = np.array([1/6, 1/6, 1/6, 1/6, 1/6, 0.0])
+# LABELLED_PROPORTIONS = LABELLED_PROPORTIONS / LABELLED_PROPORTIONS.sum()
 
-LABELLED_FRACTION = 0.5
+# LABELLED_FRACTION = 0.5
 
-DATASET = TrentoDataset(
-    labelled_proportions=LABELLED_PROPORTIONS,
-    labelled_fraction=LABELLED_FRACTION,
-    patch_size=11
-)
+# DATASET = TrentoDataset(
+#     labelled_proportions=LABELLED_PROPORTIONS,
+#     labelled_fraction=LABELLED_FRACTION,
+#     patch_size=13
+# )
 # x,y = DATASET.train_dataset.tensors # 12085
 # print(x.shape, y.shape, torch.unique(y))
 

@@ -20,9 +20,7 @@ from dmvaes.models.regular_modules import (
     EncoderB,
     EncoderBStudent,
 )
-from dmvaes.models.trento_encoders import (
-    BernoulliDecoderA7,
-)
+
 logger = logging.getLogger(__name__)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -46,6 +44,7 @@ class TrentoVAE(nn.Module):
         use_classifier: bool = False,
         encoder_z1: nn.Module = None,
         encoder_z2_z1: nn.Module = None,
+        x_decoder: nn.Module = None,
         vdist_map=None,
     ):
         if vdist_map is None:
@@ -112,14 +111,25 @@ class TrentoVAE(nn.Module):
             )
         else:
             self.encoder_z2_z1 = encoder_z2_z1
+        
+        
 
         self.decoder_z1_z2 = DecoderA(
-            n_input=n_latent + n_labels, n_output=n_latent, n_hidden=n_hidden
+            n_input=n_latent + n_labels, 
+            n_output=n_latent, 
+            n_hidden=n_hidden
         )
 
-        self.x_decoder = BernoulliDecoderA7(
-            n_input=n_latent, n_output=n_input, n_hidden=n_hidden, do_batch_norm=do_batch_norm
+
+        if x_decoder is None:
+            self.x_decoder = BernoulliDecoderA(
+            n_input=n_latent, 
+            n_output=n_input, 
+            do_batch_norm=do_batch_norm
         )
+        else:
+            self.x_decoder = x_decoder
+
 
         y_prior_probs = (
             y_prior
@@ -391,7 +401,6 @@ class TrentoVAE(nn.Module):
         log_pz1_z2 = Normal(pz1_z2m, pz1_z2_v.sqrt()).log_prob(z1).sum(-1)
 
         log_pz2 = Normal(torch.zeros_like(z2), torch.ones_like(z2)).log_prob(z2).sum(-1)
-
         px_z_loc = self.x_decoder(z1)
         # log_px_z = Bernoulli(px_z_loc).log_prob(x).sum(-1)
         log_px_z = torch.nn.BCELoss()(px_z_loc,x.expand(px_z_loc.shape[0],-1,-1,-1)).sum(-1)

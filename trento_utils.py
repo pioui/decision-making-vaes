@@ -31,7 +31,7 @@ DATASET = TrentoDataset(
     labelled_proportions=LABELLED_PROPORTIONS,
     do_1d=False,
     test_size=0.5,
-    patch_size=11
+    patch_size=13
 )
 X_TRAIN, Y_TRAIN = DATASET.train_dataset.tensors
 RDM_INDICES = np.random.choice(len(X_TRAIN), 200)

@@ -65,6 +65,7 @@ class TrentoRTrainer:
             classification_gradients=[],
         )
 
+
     @property
     def temperature(self):
         t_ref = self.it - (self.it % 500)
@@ -93,7 +94,7 @@ class TrentoRTrainer:
         if n_samples is not None:
             n_samples_theta = n_samples
             n_samples_phi = n_samples
-        logger.info(
+        print(
             "Using {n_samples_theta} and {n_samples_phi} samples for theta wake / phi wake".format(
                 n_samples_theta=n_samples_theta, n_samples_phi=n_samples_phi
             )
@@ -103,10 +104,12 @@ class TrentoRTrainer:
         optim_gen = None
         optim_var_wake = None
         if overall_loss is not None:
+
             params = filter(lambda p: p.requires_grad, self.model.parameters())
             optim = Adam(params, lr=lr)
-            logger.info("Monobjective using {} loss".format(overall_loss))
+            print("Monobjective using {} loss".format(overall_loss))
         else:
+
             params_gen = filter(
                 lambda p: p.requires_grad,
                 list(self.model.decoder_z1_z2.parameters())
@@ -122,7 +125,7 @@ class TrentoRTrainer:
             )
 
             optim_var_wake = Adam(params_var, lr=lr)
-            logger.info(
+            print(
                 "Multiobjective training using {} / {}".format(wake_theta, wake_psi)
             )
 
@@ -132,6 +135,9 @@ class TrentoRTrainer:
                 self.train_loader, cycle(self.train_annotated_loader)
             ):
                 self.it += 1
+
+                print(tensor_all.shape)
+                print(tensor_superv.shape)
 
                 x_u, _ = tensor_all
                 x_s, y_s = tensor_superv

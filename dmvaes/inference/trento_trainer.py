@@ -80,7 +80,7 @@ class TrentoRTrainer:
         overall_loss: str = None,
         wake_theta: str = "ELBO",
         wake_psi: str = "ELBO",
-        n_samples: int = 1,
+        n_samples: int = 25,
         n_samples_phi: int = None,
         n_samples_theta: int = None,
         classification_ratio: float = 50.0,
@@ -135,9 +135,6 @@ class TrentoRTrainer:
                 self.train_loader, cycle(self.train_annotated_loader)
             ):
                 self.it += 1
-
-                print(tensor_all.shape)
-                print(tensor_superv.shape)
 
                 x_u, _ = tensor_all
                 x_s, y_s = tensor_superv
@@ -396,7 +393,7 @@ class TrentoRTrainer:
         x_s,
         y_s,
         loss_type,
-        n_samples=5,
+        n_samples=25,
         reparam=True,
         classification_ratio=50.0,
         mode="all",
@@ -406,8 +403,8 @@ class TrentoRTrainer:
         temp = self.temperature
         labelled_fraction = self.dataset.labelled_fraction
         s_every = int(1 / labelled_fraction)
-
         if mode == "all":
+
             outs_s = None
             l_u = self.model.forward(
                 x_u,
@@ -418,6 +415,7 @@ class TrentoRTrainer:
                 encoder_key=encoder_key,
                 counts=counts,
             )
+
             l_s = self.model.forward(
                 x_s,
                 temperature=temp,
@@ -428,12 +426,15 @@ class TrentoRTrainer:
                 encoder_key=encoder_key,
                 counts=counts,
             )
+
             # torch.cuda.synchronize()
             l_s = labelled_fraction * l_s
             j = l_u.mean() + l_s.mean()
         elif mode == "alternate":
+
             outs_s = None
             if self.iterate % s_every == 0:
+
                 l_s = self.model.forward(
                     x_s,
                     temperature=temp,
@@ -446,6 +447,7 @@ class TrentoRTrainer:
                 )
                 j = l_s.mean()
             else:
+
                 l_u = self.model.forward(
                     x_u,
                     temperature=temp,
@@ -460,9 +462,11 @@ class TrentoRTrainer:
             raise ValueError("Mode {} not recognized".format(mode))
 
         if encoder_key == "defensive":
+
             # Classifiers' gradients are null wrt theta
             l_class = 0.0
         else:
+
             # y_pred = self.model.classify(
             #     x_s,
             #     encoder_key=encoder_key,
@@ -470,6 +474,7 @@ class TrentoRTrainer:
             #     n_samples=n_samples,
             # )
             if self.classify_mode != "vanilla":
+
                 y_pred = self.model.classify(
                     x_s,
                     encoder_key=encoder_key,
@@ -478,7 +483,9 @@ class TrentoRTrainer:
                 )
             else:
                 y_pred = self.model.classify(x_s, encoder_key=encoder_key)
+
             l_class = self.cross_entropy_fn(y_pred, target=y_s)
+        
         loss = j + classification_ratio * l_class
 
         if self.save_metrics:
@@ -492,7 +499,7 @@ class TrentoRTrainer:
         data_loader,
         do_supervised=False,
         keys=None,
-        n_samples: int = 10,
+        n_samples: int = 25,
         eval_mode=True,
         encoder_key="default",
         counts=None,

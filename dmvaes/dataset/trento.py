@@ -58,7 +58,7 @@ class TrentoDataset(Dataset):
 
 
         #reduce the dataset size to make it easier for my pour cpu
-        ind, _ = train_test_split(np.arange(len(x)), train_size=0.05, random_state=42)
+        ind, _ = train_test_split(np.arange(len(x)), train_size=0.1, random_state=42)
         x = x[ind]
         y = y[ind]
 
@@ -77,7 +77,7 @@ class TrentoDataset(Dataset):
 
         #Normalize to [0,1]
         if do_preprocess: # TODO: Something more sophisticated?
-            logging.info("Normalize to 0,1")
+            print("Normalize to 0,1")
             x_min = x.min(dim=0)[0] # [65]
             x_max = x.max(dim=0)[0] # [65]
             x = (x- x_min)/(x_max-x_min)

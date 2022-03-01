@@ -55,7 +55,7 @@ from trento_utils import (
 device = "cuda" if torch.cuda.is_available() else "cpu"
 N_PARTICULES = 30
 N_LATENT = 10
-N_EPOCHS = 1
+N_EPOCHS = 10
 N_HIDDEN = 128
 LR = 1e-3
 N_EXPERIMENTS = 1
@@ -114,13 +114,13 @@ SCENARIOS = [  # WAKE updates
                 dropout_rate=0,
                 do_batch_norm=False,
             ),
-        batch_size=2
+        batch_size=64
     ),
     
 ]
 
 DF_LI = []
-logging.info("Number of experiments : {}".format(N_EXPERIMENTS))
+print("Number of experiments : {}".format(N_EXPERIMENTS))
 # Main script
 for scenario in SCENARIOS:
     loss_gen = scenario.get("loss_gen", None)
@@ -262,12 +262,12 @@ for scenario in SCENARIOS:
             }
             print("ENCODER TYPE : ", encoder_type)
             if encoder_type == "train":
-                logging.info("Using train variational distribution for evaluation ...")
+                print("Using train variational distribution for evaluation ...")
                 eval_encoder = None
                 do_defensive_eval = do_defensive
                 multi_counts_eval = multi_counts
             else:
-                logging.info(
+                print(
                     "Training eval variational distribution for evaluation with {} ...".format(
                         encoder_type
                     )
@@ -284,7 +284,7 @@ for scenario in SCENARIOS:
 
                 while True:
                     try:
-                        logging.info("Using map {} ...".format(vdist_map_eval))
+                        print("Using map {} ...".format(vdist_map_eval))
                         new_classifier = nn.ModuleDict(
                             {
                                 key: ClassifierA(
@@ -331,20 +331,20 @@ for scenario in SCENARIOS:
                             os.path.exists(filen) for filen in mdl_names.values()
                         ]
                         if np.array(filen_exists_arr).all():
-                            logging.info("Loading eval mdls")
+                            print("Loading eval mdls")
                             for key in mdl_names:
                                 encoders[key].load_state_dict(
                                     torch.load(mdl_names[key])
                                 )
                             mdl.update_q(**encoders)
                         else:
-                            logging.info("training {}".format(encoder_type))
+                            print("training {}".format(encoder_type))
                             trainer.train_eval_encoder(
                                 encoders=encoders,
                                 n_epochs=n_epochs,
                                 lr=lr,
                                 wake_psi=encoder_type,
-                                n_samples_phi=30,
+                                n_samples_phi=25,
                                 classification_ratio=CLASSIFICATION_RATIO,
                                 reparam_wphi=reparam,
                             )

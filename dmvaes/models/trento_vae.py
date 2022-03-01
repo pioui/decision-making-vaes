@@ -157,7 +157,7 @@ class TrentoVAE(nn.Module):
     def classify(
         self,
         x,
-        n_samples=1,
+        n_samples=25,
         mode="plugin",
         counts: pd.Series = None,
         encoder_key="default",
@@ -172,7 +172,8 @@ class TrentoVAE(nn.Module):
         #     counts=counts,
         #     temperature=0.5,
         # )
-        n_batch, _ = x.shape
+        n_batch, _ ,_,_= x.shape
+
         inference_kwargs = dict(
             n_samples=n_samples,
             encoder_key=encoder_key,
@@ -228,7 +229,7 @@ class TrentoVAE(nn.Module):
     def update_q(
         self, classifier: nn.Module, encoder_z1: nn.Module, encoder_z2_z1: nn.Module,
     ):
-        logging.info("UPDATING ENCODERS ... ONLY MAKES SENSE WHEN USING EVAL ENCODER!")
+        print("UPDATING ENCODERS ... ONLY MAKES SENSE WHEN USING EVAL ENCODER!")
         self.classifier = classifier
         self.encoder_z1 = encoder_z1
         self.encoder_z2_z1 = encoder_z2_z1

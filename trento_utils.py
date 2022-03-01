@@ -23,7 +23,7 @@ N_LABELS = 5
 
 CLASSIFICATION_RATIO = 50.0
 N_EVAL_SAMPLES = 25
-N_EPOCHS = 1
+N_EPOCHS = 10
 LR = 3e-4
 BATCH_SIZE = 512
 DATASET = TrentoDataset(
@@ -85,7 +85,7 @@ def res_eval_loop(
     model = trainer.model
 
 
-    logging.info("Train Predictions computation ...")
+    print("Train Predictions computation ...")
     with torch.no_grad():
         # Below function integrates both inference methods for
         # mixture and simple statistics
@@ -115,7 +115,7 @@ def res_eval_loop(
 
     # Precision / Recall for discovery class
     # And accuracy
-    logging.info("Precision, recall, auc ...")
+    print("Precision, recall, auc ...")
     res_baseline = compute_reject_score(y_true=y_true, y_pred=y_pred)
     train_m_ap = res_baseline["precision_discovery"]
     train_m_recall = res_baseline["recall_discovery"]
@@ -144,7 +144,7 @@ def res_eval_loop(
     train_m_accuracy_is = accuracy_score(y_non9, y_pred_non9_is)
 
 
-    logging.info("Test Predictions computation ...")
+    print("Test Predictions computation ...")
     with torch.no_grad():
         # Below function integrates both inference methods for
         # mixture and simple statistics
@@ -174,7 +174,7 @@ def res_eval_loop(
 
     # Precision / Recall for discovery class
     # And accuracy
-    logging.info("Precision, recall, auc ...")
+    print("Precision, recall, auc ...")
     res_baseline = compute_reject_score(y_true=y_true, y_pred=y_pred)
     m_ap = res_baseline["precision_discovery"]
     m_recall = res_baseline["recall_discovery"]

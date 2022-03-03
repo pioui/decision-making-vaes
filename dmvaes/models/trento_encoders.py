@@ -627,35 +627,69 @@ class BernoulliDecoderA9(nn.Module):
         means = nn.Sigmoid()(means)
         return means
 
+class ClassifierA0(nn.Module):
+    def __init__(self, n_input, n_hidden, n_output, dropout_rate=0.0, do_batch_norm=False):
+        super().__init__()
+        self.classifier = nn.Sequential(
+            nn.Linear(in_features=n_input,out_features=n_hidden),
+            nn.Dropout(p=dropout_rate),
+            nn.SELU(),
+            nn.Linear(in_features=n_hidden, out_features=int(n_hidden/2)),
+            nn.Dropout(p=dropout_rate),
+            nn.SELU(),
+            nn.Linear(in_features=int(n_hidden/2), out_features=n_output),
+            nn.Softmax(dim=-1),
+        )
+
+    def forward(self, x):
+        # n_samples, n_batch, n_latent = x.shape
+        # x_reshape=x.view(n_batch, n_samples*n_latent)
+        probas = self.classifier(x)
+        probas = probas + 1e-16
+        probas = probas / probas.sum(-1, keepdim=True)
+        return probas    
+
 
 if __name__ == "__main__":
     from torchsummary import summary
 
     n_input = 65
-    n_latent = 20
+    n_latent = 10
     n_samples = 25
     n_hidden =512    
+    n_labels = 5
+    # layer = EncoderB9(
+    #     n_input=n_input, 
+    #     n_output=n_latent, 
+    #     n_hidden=n_hidden, 
+    #     dropout_rate=0.1, 
+    #     do_batch_norm=False)
 
-    layer = EncoderB9(
-        n_input=n_input, 
-        n_output=n_latent, 
-        n_hidden=n_hidden, 
-        dropout_rate=0.1, 
-        do_batch_norm=False)
+    # x = torch.rand(123, 65, 23, 23)
+    # x_out= layer(x, n_samples)
+    # z1 = x_out['latent']
+    # print(x.shape, z1.shape)
+    # summary(layer, (65,23,23))
 
-    x = torch.rand(123, 65, 23, 23)
-    x_out= layer(x, n_samples)
-    z1 = x_out['latent']
-    print(x.shape, z1.shape)
-    summary(layer, (65,23,23))
+    # layer = BernoulliDecoderA8(
+    #     n_input=n_samples*n_latent, 
+    #     n_output=n_input, 
+    #     n_hidden=n_hidden, 
+    #     dropout_rate=0.1, 
+    #     do_batch_norm=False)
 
-    layer = BernoulliDecoderA8(
-        n_input=n_samples*n_latent, 
-        n_output=n_input, 
-        n_hidden=n_hidden, 
-        dropout_rate=0.1, 
-        do_batch_norm=False)
-
-    x_out= layer(z1)
-    print(z1.shape, x_out.shape)
+    # x_out= layer(z1)
+    # print(z1.shape, x_out.shape)
     # summary(layer, (25,1,10))
+
+    layer = ClassifierA0(
+        n_input=n_latent, 
+        n_output=n_labels, 
+        n_hidden=int(n_hidden/2), 
+        dropout_rate=0.1, 
+        )
+
+    x = torch.rand(n_samples, 32, n_latent)
+    x_out= layer(x)
+    c = x_out
+    print(x.shape, c.shape)

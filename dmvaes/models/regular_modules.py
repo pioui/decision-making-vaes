@@ -590,3 +590,48 @@ class EncoderIAF(nn.Module):
         if torch.isnan(qz_x).any() or torch.isinf(qz_x).any():
             print("ouille")
         return dict(latent=z, posterior_density=qz_x, last_inp=inp)
+
+
+
+if __name__ == "__main__":
+    from torchsummary import summary
+
+    n_input = 65
+    n_latent = 20
+    n_samples = 25
+    n_hidden =128    
+    n_labels = 5
+    # layer = EncoderB9(
+    #     n_input=n_input, 
+    #     n_output=n_latent, 
+    #     n_hidden=n_hidden, 
+    #     dropout_rate=0.1, 
+    #     do_batch_norm=False)
+
+    # x = torch.rand(123, 65, 23, 23)
+    # x_out= layer(x, n_samples)
+    # z1 = x_out['latent']
+    # print(x.shape, z1.shape)
+    # summary(layer, (65,23,23))
+
+    # layer = BernoulliDecoderA8(
+    #     n_input=n_samples*n_latent, 
+    #     n_output=n_input, 
+    #     n_hidden=n_hidden, 
+    #     dropout_rate=0.1, 
+    #     do_batch_norm=False)
+
+    # x_out= layer(z1)
+    # print(z1.shape, x_out.shape)
+    # summary(layer, (25,1,10))
+
+    layer = ClassifierA(
+        n_input=n_latent, 
+        n_output=n_labels, 
+        dropout_rate=0.1, 
+        )
+
+    x = torch.rand(n_samples, 32, n_latent)
+    x_out= layer(x)
+    c = x_out
+    print(x.shape, c.shape)

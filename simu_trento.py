@@ -33,7 +33,8 @@ from dmvaes.models.trento_encoders import (
     EncoderB8,
     BernoulliDecoderA8,
     EncoderB9,
-    BernoulliDecoderA9
+    BernoulliDecoderA9,
+    ClassifierA0,
 )
 
 from trento_utils import (
@@ -57,9 +58,9 @@ from trento_utils import (
 device = "cuda" if torch.cuda.is_available() else "cpu"
 N_PARTICULES = 30
 N_LATENT = 10
-N_EPOCHS = 200
+N_EPOCHS = 50
 N_HIDDEN = 128
-LR = 1e-4
+LR = 1e-3
 N_EXPERIMENTS = 1
 DEFAULT_MAP = dict(
     REVKL="gaussian",
@@ -92,7 +93,49 @@ EVAL_ENCODERS = [
     dict(encoder_type="ELBO", reparam=True, eval_encoder_name="VAE"),
 ]
 
-SCENARIOS = [  # WAKE updates
+SCENARIOS = [  
+    # WAKE updates
+    dict(
+        dataset = TrentoDataset(
+                labelled_fraction=LABELLED_FRACTION,
+                labelled_proportions=LABELLED_PROPORTIONS,
+                do_1d=False,
+                test_size=0.5,
+                patch_size=13
+            ),
+        loss_gen="ELBO",
+        loss_wvar="ELBO",
+        reparam_latent=True,
+        counts=None,
+        model_name="EncoderB8_ClassifierA0_VAE",
+        n_samples_train=25,
+        encoder_z1=nn.ModuleDict(
+            {"default": EncoderB8( 
+                n_input=N_INPUT,
+                n_output=N_LATENT,
+                n_hidden=256,
+                dropout_rate=0,
+                do_batch_norm=False,
+            )}
+        ),
+        x_decoder=BernoulliDecoderA8( 
+                n_input=N_LATENT*25,
+                n_output=N_INPUT,
+                n_hidden=256,
+                dropout_rate=0,
+                do_batch_norm=False,
+            ),
+        batch_size=32,
+        classifier=nn.ModuleDict(
+            {"default": ClassifierA0(
+                n_input=N_LATENT, 
+                n_output=N_LABELS, 
+                n_hidden=int(256/2), 
+                dropout_rate=0.1, 
+                )
+            }
+        ),
+    ),
     dict(
         dataset = TrentoDataset(
                 labelled_fraction=LABELLED_FRACTION,
@@ -152,7 +195,7 @@ SCENARIOS = [  # WAKE updates
                 n_input=N_LATENT*25,
                 n_output=N_INPUT,
                 n_hidden=256,
-                dropout_rate=0,
+                dropout_rate=0.2,
                 do_batch_norm=False,
             ),
         batch_size=32
@@ -210,7 +253,7 @@ SCENARIOS = [  # WAKE updates
                 n_input=N_INPUT,
                 n_output=20,
                 n_hidden=512,
-                dropout_rate=0,
+                dropout_rate=0.2,
                 do_batch_norm=False,
             )}
         ),
@@ -253,6 +296,7 @@ for scenario in SCENARIOS:
 
     encoder_z1=scenario.get("encoder_z1", None)
     x_decoder=scenario.get("x_decoder", None)
+    classifier=scenario.get("classifier", None)
 
     do_defensive = type(loss_wvar) == list
     multi_encoder_keys = loss_wvar if do_defensive else ["default"]
@@ -298,7 +342,8 @@ for scenario in SCENARIOS:
                     multi_encoder_keys=multi_encoder_keys,
                     vdist_map=vdist_map_train,
                     encoder_z1=encoder_z1,
-                    x_decoder=x_decoder
+                    x_decoder=x_decoder,
+                    classifier=classifier,
                 )
                 if os.path.exists(mdl_name):
                     logging.info("model exists; loading from .pt")
@@ -393,17 +438,7 @@ for scenario in SCENARIOS:
                 while True:
                     try:
                         logging.info("Using map {} ...".format(vdist_map_eval))
-                        new_classifier = nn.ModuleDict(
-                            {
-                                key: ClassifierA(
-                                    n_latent,
-                                    n_output=N_LABELS,
-                                    do_batch_norm=False,
-                                    dropout_rate=0.1,
-                                )
-                                for key in multi_encoder_keys_eval
-                            }
-                        ).to(device)
+                        new_classifier = classifier.to(device)
                         new_encoder_z1 = encoder_z1.to(device)
 
                         new_encoder_z2_z1 = nn.ModuleDict(

@@ -45,6 +45,7 @@ class TrentoVAE(nn.Module):
         encoder_z1: nn.Module = None,
         encoder_z2_z1: nn.Module = None,
         x_decoder: nn.Module = None,
+        classifier: nn.Module = None,
         vdist_map=None,
     ):
         if vdist_map is None:
@@ -62,17 +63,21 @@ class TrentoVAE(nn.Module):
         self.n_labels = n_labels
         self.n_latent = n_latent
         # Classifier takes n_latent as input
-        self.classifier = nn.ModuleDict(
-            {
-                key: ClassifierA(
-                    n_latent,
-                    n_output=n_labels,
-                    do_batch_norm=do_batch_norm,
-                    dropout_rate=dropout_rate,
-                )
-                for key in multi_encoder_keys
-            }
-        )
+
+        if classifier is None:
+            self.classifier = nn.ModuleDict(
+                {
+                    key: ClassifierA(
+                        n_latent,
+                        n_output=n_labels,
+                        do_batch_norm=do_batch_norm,
+                        dropout_rate=dropout_rate,
+                    )
+                    for key in multi_encoder_keys
+                }
+            )
+        else:
+            self.classifier=classifier
 
         if encoder_z1 is None:
             z1_map = dict(gaussian=EncoderB, student=EncoderBStudent,)
